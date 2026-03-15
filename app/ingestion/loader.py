@@ -5,7 +5,6 @@ import pymupdf4llm
 
 SEP = chr(10)
 
-
 def load_file(path: Path) -> str:
     match path.suffix.lower():
         case ".pdf":
@@ -14,7 +13,6 @@ def load_file(path: Path) -> str:
             return SEP.join(p.text for p in Document(path).paragraphs)
         case _:
             return path.read_text(encoding="utf-8")
-
 
 def load_directory(dir_path: Path) -> list[tuple[str, Path]]:
     return [

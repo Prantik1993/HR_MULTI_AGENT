@@ -5,4 +5,4 @@ from app.graph.state import HRState
 
 
 def grievance_node(state: HRState) -> dict:
-    return _specialist_node(state, "grievance", GRIEVANCE_SYSTEM)
+    return _specialist_node(state, "grievance_node", GRIEVANCE_SYSTEM)

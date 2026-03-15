@@ -5,4 +5,4 @@ from app.graph.state import HRState
 
 
 def policy_node(state: HRState) -> dict:
-    return _specialist_node(state, "policy", POLICY_SYSTEM)
+    return _specialist_node(state, "policy_node", POLICY_SYSTEM)

@@ -5,4 +5,4 @@ from app.graph.state import HRState
 
 
 def talent_node(state: HRState) -> dict:
-    return _specialist_node(state, "talent", TALENT_SYSTEM)
+    return _specialist_node(state, "talent_node", TALENT_SYSTEM)
