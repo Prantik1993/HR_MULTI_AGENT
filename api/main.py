@@ -1,11 +1,3 @@
-"""
-api/main.py
-------------
-FIXES:
-  [06] asyncio.get_event_loop() → asyncio.get_running_loop()
-  [07] Empty query now rejected with 422 (Field min_length=1)
-  [08] Full structured logging added
-"""
 from __future__ import annotations
 import asyncio
 import time
@@ -31,9 +23,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+MAX_HISTORY_TURNS = 10          # keep last 10 turns (5 exchanges) max
+
 
 class ChatRequest(BaseModel):
-    query: str = Field(..., min_length=1, max_length=2000)   # FIX [07]
+    query: str = Field(..., min_length=1, max_length=2000)
     history: list[dict] = []
 
 
@@ -45,8 +39,15 @@ class ChatResponse(BaseModel):
 
 
 def _build_messages(history: list[dict], query: str) -> list:
+    # cap history to last MAX_HISTORY_TURNS entries
+    trimmed = history[-MAX_HISTORY_TURNS:]
+    if len(history) > MAX_HISTORY_TURNS:
+        logger.debug(
+            "_build_messages | history trimmed %d → %d turns",
+            len(history), MAX_HISTORY_TURNS,
+        )
     msgs = []
-    for m in history:
+    for m in trimmed:
         if m["role"] == "user":
             msgs.append(HumanMessage(content=m["content"]))
         else:
@@ -58,15 +59,18 @@ def _build_messages(history: list[dict], query: str) -> list:
 @app.post("/chat", response_model=ChatResponse)
 async def chat(req: ChatRequest) -> ChatResponse:
     t0 = time.perf_counter()
-    logger.info("POST /chat | query=%r history_turns=%d", req.query[:80], len(req.history))
+    logger.info(
+        "POST /chat | query=%r history_turns=%d",
+        req.query[:80], len(req.history),
+    )
 
     if cached_answer := cache.get(req.query):
-        logger.info("POST /chat | cache HIT — returning cached answer")
+        logger.info("POST /chat | cache HIT")
         return ChatResponse(intent="cached", answer=cached_answer, sources=[], cached=True)
 
     try:
         messages = _build_messages(req.history, req.query)
-        loop = asyncio.get_running_loop()         # FIX [06]: was get_event_loop()
+        loop = asyncio.get_running_loop()
         invoke = partial(
             graph.invoke,
             {"messages": messages, "intent": "", "answer": "", "sources": []},
