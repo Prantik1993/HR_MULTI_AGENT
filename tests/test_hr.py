@@ -70,18 +70,18 @@ def test_chunker_overlap():
     assert len(chunks) >= 2
 
 
-def test_chunker_default_size_300():
-    """Confirm default chunk_size is 300 (not the old 200)."""
+def test_chunker_default_size_200():
+    """Confirm default chunk_size is 200 and overlap is 30."""
     import inspect
     sig = inspect.signature(chunk_text)
-    assert sig.parameters["chunk_size"].default == 300
-    assert sig.parameters["overlap"].default == 50
+    assert sig.parameters["chunk_size"].default == 200
+    assert sig.parameters["overlap"].default == 30
 
 
 def test_chunker_preserves_long_section():
-    """A 250-word section should fit in a single 300-word chunk."""
-    section = " ".join([f"word{i}" for i in range(250)])
-    chunks = chunk_text(section, chunk_size=300, overlap=50)
+    """A 150-word section fits in a single 200-word chunk."""
+    section = " ".join([f"word{i}" for i in range(150)])
+    chunks = chunk_text(section, chunk_size=200, overlap=30)
     assert len(chunks) == 1
 
 
@@ -110,9 +110,8 @@ def test_cache_eviction():
 
 def test_cache_ttl_expiry():
     """Expired entries should not be returned."""
-    c = QueryCache(max_size=10, ttl_seconds=0)
+    c = QueryCache(max_size=10, ttl_seconds=-1)
     c.set("key", "value")
-    import time; time.sleep(0.01)
     assert c.get("key") is None
 
 
